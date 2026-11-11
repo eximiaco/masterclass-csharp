@@ -1,0 +1,33 @@
+schema_version: 1
+
+application:
+  applies_to:
+    - new
+    - modified
+
+languages:
+  identifiers:
+    files: en
+    types: en
+    functions: en
+    variables: en
+    constants: en
+
+  documentation:
+    repository: pt-BR
+    code: pt-BR
+    public_api: pt-BR
+    test_descriptions: pt-BR
+
+version_control:
+  commits:
+    style: conventional
+    language: pt-BR
+    body_separator: blank-line
+
+  branching:
+    strategy: trunk-based
+    development_branch: main
+    open_pr: true
+    work_branch_template: "{type}({context})"
+    pr_provider: github

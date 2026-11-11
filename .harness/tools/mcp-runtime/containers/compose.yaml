@@ -1,0 +1,204 @@
+# Stack do mcp-runtime: um serviço por provedor (SPEC §1, §10, §11).
+#
+# O ciclo de vida é operado pela CLI do artefato (binário Rust em src/, port
+# do script Node 0.1.x — removido na revisão 0.2.3):
+#   <runtime> compose --env-file containers/pins.env -f containers/compose.yaml \
+#     -p mcp-<contexto> up -d --build
+#
+# Variáveis de ambiente esperadas:
+#   pins (containers/pins.env): GITHUB_MCP_IMAGE, ADO_MCP_NPM_VERSION,
+#     ADO_HTTP_ADAPTER, AZURE_CLI_VERSION, XHARNESS_MCP_IMAGE
+#   MCP_RUNTIME_SECRETS_FILE: caminho absoluto do arquivo efêmero decriptado
+#     pelo `up` (SPEC §9); obrigatório para `up`
+#   MCP_RUNTIME_CONTEXT: nome do contexto; nomeia volumes ado-auth e xharness-qmd
+#   MCP_RUNTIME_IMAGE_OWNER: owner do GHCR na tag da imagem (default eximiaco)
+#   MCP_RUNTIME_ARCH_CORPUS: caminho absoluto do clone do corpus normativo
+#     (deve conter arch-graph/graph-doc); bind-mount em /app/repo:ro (ADR-0008)
+#   MCP_RUNTIME_CONTAINER_USER: uid:gid do processo no container (o env-file
+#     gerado pela CLI fixa o default 10001:10001 e passa o uid:gid do
+#     arquivo efêmero em hosts Linux, onde o secret file-based é bind-mount
+#     com dono do host; interpolação com default `${VAR:-x}` é mangada pelo
+#     nerdctl compose — por isso a variável é sempre definida)
+#
+# Divergências nerdctl/docker (verificadas empiricamente, documentadas no TOOL.md):
+#   - nerdctl rejeita "no-new-privileges:true" (sufixo): usa-se a forma bare;
+#   - nerdctl ignora `healthcheck` (a CLI aguarda o handshake MCP no endpoint
+#     de cada serviço — SPEC §9; o healthcheck beneficia docker);
+#   - `working_dir` é respeitado por ambos e torna o cwd do processo
+#     determinístico (`/home/mcp`, já criado na imagem — SPEC §10).
+
+services:
+  github:
+    build:
+      context: .
+      dockerfile: Containerfile
+      args:
+        GITHUB_MCP_IMAGE: ${GITHUB_MCP_IMAGE}
+        ADO_MCP_NPM_VERSION: ${ADO_MCP_NPM_VERSION}
+        ADO_HTTP_ADAPTER: ${ADO_HTTP_ADAPTER}
+        AZURE_CLI_VERSION: ${AZURE_CLI_VERSION}
+    # Imagem publicada no GHCR: ghcr.io/<owner>/mcp-runtime:v<versão do artefato>.
+    # Default do owner via interpolação (eximiaco) — forma `${VAR:-default}`
+    # verificada no nerdctl 2.2.1 e no docker; override com MCP_RUNTIME_IMAGE_OWNER.
+    # O `up` do CLI repassa --build (fallback de build local a partir dos
+    # pins, SPEC §2): a imagem publicada é usada via compose pull/execução
+    # direta documentada no TOOL.md.
+    image: ghcr.io/${MCP_RUNTIME_IMAGE_OWNER:-eximiaco}/mcp-runtime:v0.5.2
+    # Transporte HTTP nativo do server (SPEC §1); PAT vai por header na chamada,
+    # as variáveis do secrets ficam no ambiente do processo do server.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        set -a
+        . /run/secrets/secrets.env
+        set +a
+        if [ -z "$${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
+          echo "mcp-runtime: GITHUB_PERSONAL_ACCESS_TOKEN ausente no contexto (SPEC §5)" >&2
+          exit 64
+        fi
+        exec /usr/local/bin/github-mcp-server http --port 8082
+    # Diretório de trabalho explícito (SPEC §10): o cwd do processo passa a ser
+    # determinístico e não depende do cwd herdado do runtime de container.
+    working_dir: /home/mcp
+    ports:
+      - "127.0.0.1:8377:8082"
+    secrets:
+      - secrets.env
+    user: "${MCP_RUNTIME_CONTAINER_USER}"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: "1.0"
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8082/').then((r) => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  ado:
+    build:
+      context: .
+      dockerfile: Containerfile
+      args:
+        GITHUB_MCP_IMAGE: ${GITHUB_MCP_IMAGE}
+        ADO_MCP_NPM_VERSION: ${ADO_MCP_NPM_VERSION}
+        ADO_HTTP_ADAPTER: ${ADO_HTTP_ADAPTER}
+        AZURE_CLI_VERSION: ${AZURE_CLI_VERSION}
+    # Imagem publicada no GHCR: ghcr.io/<owner>/mcp-runtime:v<versão do artefato>.
+    # Default do owner via interpolação (eximiaco) — forma `${VAR:-default}`
+    # verificada no nerdctl 2.2.1 e no docker; override com MCP_RUNTIME_IMAGE_OWNER.
+    # O `up` do CLI repassa --build (fallback de build local a partir dos
+    # pins, SPEC §2): a imagem publicada é usada via compose pull/execução
+    # direta documentada no TOOL.md.
+    image: ghcr.io/${MCP_RUNTIME_IMAGE_OWNER:-eximiaco}/mcp-runtime:v0.5.2
+    # Server ADO é stdio-only: o adaptador pronto do ecossistema (supergateway)
+    # compõe a linha de comando do server dentro do container (SPEC §1).
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        set -a
+        . /run/secrets/secrets.env
+        set +a
+        if [ -z "$${ADO_ORG:-}" ]; then
+          echo "mcp-runtime: ADO_ORG ausente no contexto (SPEC §5)" >&2
+          exit 64
+        fi
+        if [ -n "$${AZURE_DEVOPS_PAT:-}" ]; then
+          AUTH=pat
+          export PERSONAL_ACCESS_TOKEN=$$(printf 'ado-mcp:%s' "$$AZURE_DEVOPS_PAT" | base64)
+        else
+          AUTH=azcli
+        fi
+        # --logLevel info (não none): o supergateway só publica o stderr do
+        # server ADO (e o exit code do filho) nesse nível; em `none` o
+        # diagnóstico de falha de start fica invisível (SPEC §12).
+        exec /opt/mcp-runtime/node_modules/.bin/supergateway \
+          --stdio "node /opt/mcp-runtime/node_modules/@azure-devops/mcp/dist/index.js $$ADO_ORG --authentication $$AUTH" \
+          --outputTransport streamableHttp --port 8080 \
+          --healthEndpoint /healthz --logLevel info
+    working_dir: /home/mcp
+    ports:
+      - "127.0.0.1:8378:8080"
+    secrets:
+      - secrets.env
+    volumes:
+      # Sessão az (modo azcli): tokens e estado permanecem no container (SPEC §4).
+      - ado-auth:/home/mcp/.azure
+    environment:
+      HOME: /home/mcp
+    user: "${MCP_RUNTIME_CONTAINER_USER}"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: "1.0"
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then((r) => process.exit(0)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # MCP normativo x-harness (ADR-0008 / SPEC §2): imagem pinada em
+  # XHARNESS_MCP_IMAGE; corpus por bind-mount (não faz parte do pin).
+  # Sem secrets: o serviço não autentica em provedor externo.
+  # Sem `user:` fixo: a imagem precisa escrever o cache QMD em /data; os
+  # demais controles de hardening (§11) permanecem.
+  xharness:
+    image: ${XHARNESS_MCP_IMAGE}
+    working_dir: /app/mcp
+    ports:
+      - "127.0.0.1:8379:3100"
+    volumes:
+      - ${MCP_RUNTIME_ARCH_CORPUS}:/app/repo:ro
+      - xharness-qmd:/data
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3100"
+      ARCHITECTURE_REPOSITORY_ROOT: /app/repo
+      QMD_HOME: /data
+      HOME: /data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges
+    pids_limit: 256
+    # HTTP sobe na hora; QMD embed segue em background e ainda precisa de RAM.
+    mem_limit: 2g
+    cpus: "2.0"
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:3100/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+secrets:
+  secrets.env:
+    file: ${MCP_RUNTIME_SECRETS_FILE}
+
+volumes:
+  ado-auth:
+    name: mcp-${MCP_RUNTIME_CONTEXT}-ado-auth
+  xharness-qmd:
+    name: mcp-${MCP_RUNTIME_CONTEXT}-xharness-qmd

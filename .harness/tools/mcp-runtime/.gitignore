@@ -1,0 +1,3 @@
+# Scripts pessoais de teste local — não fazem parte do artefato publicado.
+scripts/up-orbit-windows.ps1
+scripts/install-orbit-local.ps1

@@ -1,0 +1,31 @@
+[package]
+name = "mcp-runtime"
+version = "0.5.1"
+edition = "2021"
+description = "CLI de ciclo de vida do runtime MCP local em containers (SPEC §8)."
+
+[[bin]]
+name = "mcp-runtime"
+path = "src/main.rs"
+
+# Revisão 0.2.x: crates mínimos — HTTPS oficial, desempacotamento de age
+# (tar.gz e zip) para `tools install` e hashing sha256 (verificação dos pins).
+# Criptografia permanece 100% em SOPS/age (SPEC §5, §6).
+[dependencies]
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+tar = "0.4"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+sha2 = "0.10"
+serde_json = "1"
+
+# TLS por plataforma, o mesmo contrato do ai-installer: fora do Windows a ureq
+# usa rustls; no alvo x86_64-pc-windows-gnu o rustls/ring não compila, então o
+# Windows liga o backend nativo do sistema (schannel) via native-tls — é o que
+# faz o binário importar secur32.dll/crypt32.dll e confiar no repositório de
+# certificados do sistema (`scripts/check-binaries.mjs`).
+[target.'cfg(not(windows))'.dependencies]
+ureq = { version = "2", default-features = false, features = ["tls"] }
+
+[target.'cfg(windows)'.dependencies]
+native-tls = "0.2"
+ureq = { version = "2", default-features = false, features = ["native-tls"] }

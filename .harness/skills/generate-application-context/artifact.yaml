@@ -1,0 +1,13 @@
+apiVersion: ai-playbook/v1
+kind: Skill
+metadata:
+  name: generate-application-context
+  version: 0.4.0
+  description: Cria ou atualiza APPLICATION.md e .harness/project-profile.yaml com base em evidências do repositório.
+  status: experimental
+  tags:
+    - documentation
+    - context
+spec:
+  entrypoint: SKILL.md
+  dependencies: []

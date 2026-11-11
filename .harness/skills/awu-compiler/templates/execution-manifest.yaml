@@ -1,0 +1,68 @@
+# Execution Manifest
+#
+# Representa o grafo de execução produzido pela skill awu-compiler.
+#
+# Dependências determinam ordem e paralelismo.
+# Não adicionar dependências apenas para representar uma preferência de ordem
+# ou organização visual; nesse caso a dependência é artificial e não deve existir.
+#
+# Cada dependência é um objeto com `id` e `rationale` (máximo de 240 caracteres).
+# O rationale declara o que a unidade dependente precisa da dependência:
+# valor, comportamento, contrato, artefato compartilhado ou pré-requisito de
+# validação. O rationale vive apenas neste manifesto, sem duplicação nas unidades emitidas.
+#
+# `diagnostics` registra o racional da compilação (processo) e nunca substitui
+# o review-manifest.md (visão consolidada das especificações emitidas).
+# Cada entrada tem no máximo 240 caracteres. Seção efêmera: é removida junto
+# com o manifesto e nunca documenta comportamento atual do sistema.
+#
+# Um Agent Work Unit está disponível para execução quando todas as unidades
+# declaradas em `depends_on` estiverem concluídas com sucesso.
+
+id: "{{manifest_id}}"
+
+title: "{{title}}"
+
+source:
+  type: "{{source_type}}"
+  reference: "{{source_reference}}"
+
+diagnostics:
+
+  decomposition:
+    - "{{why_the_package_has_this_topology}}"
+
+  couplings:
+    - "{{shared_surfaces_detected_and_how_the_compilation_handled_them}}"
+
+  rejected_alternatives:
+    - "{{discarded_decompositions_and_reason}}"
+
+  execution_risks:
+    - "{{known_execution_or_parallelism_risks}}"
+
+units:
+
+  - id: "{{awu_id}}"
+    spec: "{{awu_path}}"
+    work_type: "{{work_type}}"
+
+    depends_on: []
+
+  # Exemplo:
+  #
+  # - id: "user-auth-api"
+  #   spec: "./user-auth-api.md"
+  #   work_type: "development"
+  #
+  #   depends_on:
+  #     - id: "user-auth-core"
+  #       rationale: "Endpoints expõem o contrato de autenticação definido no core; sem ele, a interface seria decidida pelo executor."
+  #
+  # - id: "user-auth-tests"
+  #   spec: "./user-auth-tests.md"
+  #   work_type: "integration-testing"
+  #
+  #   depends_on:
+  #     - id: "user-auth-api"
+  #       rationale: "Fluxos HTTP fim-a-fim exigem os endpoints implementados."

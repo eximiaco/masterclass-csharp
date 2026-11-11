@@ -55,3 +55,13 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# AI Playbook harness — links locais gerados pelo ai-installer
+.claude/skills
+.agents/skills
+
+# Binário do mcp-runtime materializado pelo bundle da release (ai-installer)
+.harness/tools/mcp-runtime/mcp-runtime
+
+# macOS
+.DS_Store

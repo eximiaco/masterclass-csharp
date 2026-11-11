@@ -1,0 +1,16 @@
+apiVersion: ai-playbook/v1
+kind: Skill
+metadata:
+  name: awu-dev-preflight
+  version: 0.3.0
+  description: >-
+    Prepara e finaliza a execução de Agent Work Units: lê a estratégia de branching do project profile, posiciona a work branch ou um worktree isolado por work unit no início do manifest e entrega por PR ou merge no fim.
+  status: experimental
+  tags:
+    - git
+    - workflow
+    - orchestration
+spec:
+  entrypoint: SKILL.md
+  dependencies:
+    - skills/awu-compiler@latest
