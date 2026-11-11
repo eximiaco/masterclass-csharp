@@ -18,5 +18,6 @@
 ## Harness / AWU
 
 - Problemas de skills observados na primeira execução completa de pacote: ver
-  [episódio 2026-11-11](episodes/2026-11-11-awu-gymerp-legacy-net10.md) (refino pendente das skills
-  awu-workspace, awu-compiler e awu-package-executor).
+  [episódio 2026-11-11](episodes/2026-11-11-awu-gymerp-legacy-net10.md). O executor local recebeu
+  `refine` e reconcile por blob de checkpoint (`6b9ff1f`), mas essa correção ainda não está no AI Playbook:
+  uma atualização das skills pelo lock pode sobrescrevê-la. Demais itens seguem pendentes upstream.

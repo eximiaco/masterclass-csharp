@@ -3,10 +3,32 @@
 Pacote `atualizar-versoes-das-bibliotecas-nuget-do-projeto` (3 unidades: correção de
 `PaymentServiceTests`, migração net9→net10 com pacotes de runtime, migração de testes para
 xunit.v3 + MTP). Execução `0cd342258369abfb21d9`. O trabalho técnico foi concluído e
-commitado (`38e7091`, `7f4ba1f`, `1cceeaa`), mas o executor ficou `blocked` por limitação
-estrutural. Provas em `.harness/audits/test-strategy/atualizar-versoes-das-bibliotecas-nuget-do-projeto/0cd342258369abfb21d9/`.
+commitado (`38e7091`, `7f4ba1f`, `1cceeaa`). O executor ficou `blocked` por limitação
+estrutural até a correção da skill (`6b9ff1f`), e depois fechou o pacote. Provas em
+`.harness/audits/test-strategy/atualizar-versoes-das-bibliotecas-nuget-do-projeto/0cd342258369abfb21d9/`.
 
 Registro feito a pedido do usuário para refinar as skills depois.
+
+## Resolução aplicada nesta frente (`6b9ff1f`, cópia local das skills)
+
+- **Problema 4:** o `reconcile` passou a conferir os inputs cobertos por checkpoint
+  verificado da própria unidade contra o blob do commit, não contra o worktree
+  (`awu-package-executor/scripts/lib/evidence.mjs`, `verifyUnitInputs`). O teste WV8 reproduz
+  o bug: falha no código antigo com `Prova/input alterado: source.mjs`.
+- **Problema 3:** novo comando `package-state.mjs refine --reason --authorization [--invalidate]`
+  (`scripts/lib/refine.mjs`, testes WV9). Ele mantém unidades e checkpoints, recalcula
+  hashes, invalida a unidade cuja spec mudou e registra `refinements[]`.
+- **Problema 5:** schema do arquivo de checkpoints documentado em `execution-protocol.md` e
+  `awu-compiler/references/commit-checkpoints.md`.
+- **Recuperação desta execução:** as validações das unidades 1 e 2 já estavam apagadas
+  pela invalidação indevida (ocorrida no `record` da parada do Verify). Foram
+  reconstruídas a partir dos eventos originais (`reconstruct-validations.mjs`), com os
+  checkpoints recalculados pela própria `checkpoint()` do helper. A unidade 3 foi
+  revalidada no HEAD `6b9ff1f`. A autorização está em `authorization-refinements.md`.
+- **Continuam abertos para o upstream (AI Playbook):** problemas 1, 2, 6, 7, 8, 8a e 8b,
+  e a regra de topologia no compiler. A suíte do executor tem 2 falhas preexistentes
+  alheias ao ajuste: WV6 depende do `.gitignore` do projeto, e o teste do `run-e2e` importa
+  `contexts/core`, que não existe aqui.
 
 ## Problemas nas skills / harness
 
