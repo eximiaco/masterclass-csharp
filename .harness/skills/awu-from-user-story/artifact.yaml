@@ -1,0 +1,17 @@
+apiVersion: ai-playbook/v1
+kind: Skill
+metadata:
+  name: awu-from-user-story
+  version: 0.3.0
+  description: >-
+    Lê uma User Story (ou outro work item, como Technical Debt ou Bug) do Azure DevOps pelo número (descrição, critérios de aceite, comentários, Feature e Epic), monta um brief de requisitos conciliado com plano de testes por nível (unidade, integração, E2E), o entrega à awu-compiler e confere a cobertura de testes do pacote emitido.
+  status: experimental
+  tags:
+    - specification
+    - azure-devops
+    - orchestration
+    - testing
+spec:
+  entrypoint: SKILL.md
+  dependencies:
+    - skills/awu-compiler@latest

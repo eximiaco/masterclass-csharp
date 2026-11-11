@@ -2,7 +2,7 @@ apiVersion: ai-playbook/v1
 kind: Skill
 metadata:
   name: codebase-cleanup
-  version: 0.4.0
+  version: 0.5.0
   description: Audita código e artefatos do harness para gerar relatório consolidado de higiene e simplificação, com achados classificados por tipo para consolidação e dispatch em pacote único.
   status: experimental
   tags:

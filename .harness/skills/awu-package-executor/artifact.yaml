@@ -1,0 +1,13 @@
+apiVersion: ai-playbook/v1
+kind: Skill
+metadata:
+  name: awu-package-executor
+  version: 0.2.0
+  description: Executa e retoma pacotes AWU com checkpoints e finalização verificáveis.
+  status: experimental
+  tags: [execution, lifecycle]
+spec:
+  entrypoint: SKILL.md
+  dependencies:
+    - skills/awu-workspace@0.1.0
+    - skills/awu-compiler@3.3.0

@@ -6,8 +6,8 @@ suspeitos (arquivos grandes, divisões recentes, pares espelhados). Escreva o pr
 na língua de documentação do projeto (neste repo: pt-BR) e exija o relatório na
 mesma língua.
 
-Dispare um worker por escopo, em chamadas `rlm` separadas (paralelo), com
-`name='review-<escopo>'`.
+Revisar escopos disjuntos; delegação proporcional à capacidade. Execução serial
+é válida; nenhum runtime/modelo é obrigatório.
 
 ---
 
@@ -17,7 +17,7 @@ CONTEXTO DO PROJETO
 - Antes de analisar, leia OBRIGATORIAMENTE:
   1. AGENTS.md (raiz)
   2. .harness/guidelines/development-guideline.md (diretriz de código vigente)
-  3. .harness/memory/MEMORY.md (decisões/fixações das specs — fonte de "o que é intencional")
+  3. .harness/memory/MEMORY.md (auxiliar; código/testes/config/docs prevalecem)
   4. APPLICATION.md (contexto da aplicação), quando existir
 - Commits sob revisão: <git log --since=... resumido — o que foi implementado e o que mudou de forma,
   ex.: "arquivos grandes foram divididos em partials/flows na última rodada">
@@ -65,7 +65,7 @@ FORMATO DE CADA ACHADO
 - **Ação proposta:** <concreta>
 
 REGRAS DA ANÁLISE
-- NÃO marque como problema o que MEMORY.md registra como decisão fixada de spec
+- Verifique decisões de MEMORY.md contra fontes atuais antes de julgar conflito
   (<liste aqui as fixações relevantes ao escopo, ex.: parser estrito, tabela fechada,
   grafos fechados, políticas de resposta, gaps já declarados candidatos a spec futura>).
 - NÃO marque defeitos já documentados (<ex.: docs/defect-report-*.md, DEF-xxx>).
@@ -84,7 +84,7 @@ ENTREGA
    de entradas de uma linha por achado (<título> — <arquivo:linha principal>
    — <dispatch>). É esse índice que o orquestrador usa para fundir os tipos
    entre todos os relatórios.
-3. Ao terminar, responda ao pai com agent_message (receiver_role='parent') contendo:
+3. Ao terminar, responda ao pai pelo mecanismo de retorno disponível contendo:
    resumo executivo (top 5 achados por impacto), contagem por tipo, e o caminho do arquivo escrito.
 
 ESCOPO: <pastas/arquivos exatos do worker + focos específicos, ex.: "X vs Y: duplicidade residual

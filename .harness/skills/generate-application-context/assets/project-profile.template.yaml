@@ -39,15 +39,24 @@ version_control:
     header_max_length: "{{positive_integer}}"
     body_separator: "{{blank-line|none}}"
 
-  # Estratégia de branching consumida por skills como awu-dev-preflight.
+  # Estratégia de branching consumida por skills como awu-workspace.
   # Em caso de dúvida, emita os defaults e ajuste com o usuário:
   # trunk-based usa main; git-flow usa develop.
   branching:
     strategy: "{{trunk-based|git-flow}}"
     development_branch: "{{main|develop}}"
     open_pr: "{{true|false}}"
-    work_branch_template: "{{{type}({context})}}"
     pr_provider: "{{github|azure-devops}}"
+    work_branch_naming:
+      user_story: "{{feature/us-{id}}}"
+      descriptive: "{{feature/{slug}}}"
+
+  # Frentes paralelas: um git worktree por US, fora da pasta principal.
+  worktree:
+    path: "{{../<repo>.wt}}"
+    bootstrap:
+      copy: []
+      ignore: []
 
 # Inclua somente quando houver outros padrões estáveis e relevantes que não
 # pertençam a configurações nativas, guidelines ou documentação autoritativa.

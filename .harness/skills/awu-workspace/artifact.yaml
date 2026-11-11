@@ -1,0 +1,15 @@
+apiVersion: ai-playbook/v1
+kind: Skill
+metadata:
+  name: awu-workspace
+  version: 0.1.0
+  description: >-
+    Abre, consulta, sincroniza, entrega e remove frentes de trabalho paralelas (git worktree + branch + PR por US) e roteia pacotes AWU pelo estado derivado.
+  status: experimental
+  tags:
+    - git
+    - workflow
+    - worktree
+spec:
+  entrypoint: SKILL.md
+  dependencies: []

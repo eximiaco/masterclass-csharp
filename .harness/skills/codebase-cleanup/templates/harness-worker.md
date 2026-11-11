@@ -5,8 +5,8 @@ e **acrescente ao final** uma seção `ESCOPO:` listando as pastas sob auditoria
 os focos específicos. Escreva o prompt na língua de documentação do projeto
 (neste repo: pt-BR) e exija o relatório na mesma língua.
 
-Dispare **um** worker de harness por passada, em chamada `rlm` separada dos
-workers de código (paralelo), com `name='review-harness'`.
+Revisão de harness em escopo coeso; delegação proporcional à capacidade.
+Execução serial é válida. Nenhum runtime/modelo específico é obrigatório.
 
 ---
 
@@ -17,15 +17,17 @@ CONTEXTO DO PROJETO
   1. AGENTS.md (raiz) — regras de memória e ordem de autoridades
   2. .harness/skills/awu-compiler/SKILL.md — Agent Work Unit lifecycle e traceability (as invariantes que você audita)
   3. .harness/guidelines/development-guideline.md — regras de comentários e de validação
-  4. .harness/memory/MEMORY.md, .harness/memory/procedures/ e .harness/memory/episodes/
+  4. .harness/memory/MEMORY.md; procedures/episodes somente por relevância
+  5. references/artifact-retention.md desta skill (política de fontes/provas)
 - Commits sob revisão: <git log --since=... resumido — o que foi implementado e o que mudou de forma>
 
 SUA TAREFA (SOMENTE ANÁLISE — NÃO ALTERE NENHUM ARQUIVO)
 Auditar as invariantes do harness e reportar achados de higienização:
 
 1. CONFIGURAÇÃO DE IGNORE/TRACKING
-   - Verifique que .harness NÃO está em .rgignore nem em .gitignore e que está
-     trackeado no git (git ls-files .harness).
+   - Verifique fontes do harness rastreadas/pesquisáveis. Exclusão global de fontes
+     é achado; workspace/audits detalhados/reports/cleanup-* locais são legítimos.
+     README de audits, summaries e placeholder continuam compartilhados.
    - Se estiver ignorado, reporte como achado mecânico e NÃO deixe a auditoria
      cega: pesquise .harness com caminhos explícitos ou --no-ignore.
 
@@ -81,13 +83,13 @@ Auditar as invariantes do harness e reportar achados de higienização:
 
 5. RETENÇÃO DE .harness/plans/
    - Liste relatórios antigos (ex.: cleanup-<data>/ anteriores) e proponha
-     política de retenção (ex.: manter as N mais recentes ou remover após o
-     dispatch da execução).
+     retenção deliberada conforme política; não propor remoção automática por idade.
+     Pacote/estado ativo exige ownership e gates, não TTL.
 
 REGRAS
 - SOMENTE LEITURA: não altere código, testes, memória, workspace, plans ou configuração.
 - NÃO marque defeitos já documentados (docs/defect-report-*.md, DEF-xxx).
-- NÃO marque decisões fixadas em MEMORY.md como problema.
+- Memória não suprime evidência atual de código/testes/config/docs; cite conflito.
 - TAXONOMIA OBRIGATÓRIA: cada achado usa exatamente UM tipo canônico, que vira
   o título da seção de consolidação no sumário final:
   - config-ignore — checagem 1 (configuração de ignore/tracking);
@@ -111,7 +113,7 @@ ENTREGA
    de entradas de uma linha por achado (<título> — <evidência principal> —
    <dispatch>). É esse índice que o orquestrador usa para fundir os tipos
    entre todos os relatórios.
-3. Ao terminar, responda ao pai com agent_message (receiver_role='parent') contendo:
+3. Ao terminar, responda ao pai pelo mecanismo de retorno disponível contendo:
    resumo executivo (top achados), contagem por tipo (config-ignore / residuo-awu /
    higiene-memoria / inventario-workspace / retencao-plans) e o caminho do arquivo escrito.
 
