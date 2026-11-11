@@ -29,13 +29,12 @@ namespace Gymerp.IntegrationTests.Services
 
         public FullEnrollmentServiceTests()
         {
-            _container = new MsSqlBuilder()
-                .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
                 .WithPassword("YourStrong!Passw0rd")
                 .Build();
         }
 
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             await _container.StartAsync();
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -65,7 +64,7 @@ namespace Gymerp.IntegrationTests.Services
             await _context.Database.EnsureCreatedAsync();
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             if (_context != null)
                 await _context.DisposeAsync();

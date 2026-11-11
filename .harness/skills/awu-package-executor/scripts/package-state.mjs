@@ -8,14 +8,17 @@ import { reconcile } from "./lib/evidence.mjs";
 import { record } from "./lib/events.mjs";
 import { close, verifyPackage } from "./lib/close.mjs";
 import { archivePath, archivedResult, retire } from "./lib/retention.mjs";
+import { refine } from "./lib/refine.mjs";
 
 function options(argv) {
   const [operation, ...args] = argv;
-  if (!["begin", "status", "next", "record", "resume", "close", "retire"].includes(operation)) fail(`Operação desconhecida: ${operation}`);
+  if (!["begin", "status", "next", "record", "resume", "refine", "close", "retire"].includes(operation))
+    fail(`Operação desconhecida: ${operation}`);
   const parsed = { operation };
   for (let index = 0; index < args.length; index++) {
     const flag = args[index];
-    if (!["--manifest", "--state", "--event", "--full", "--resume-paused", "--reason", "--repo"].includes(flag)) fail(`Opção desconhecida: ${flag}`);
+    const flags = ["--manifest", "--state", "--event", "--full", "--resume-paused", "--reason", "--repo", "--authorization", "--invalidate"];
+    if (!flags.includes(flag)) fail(`Opção desconhecida: ${flag}`);
     const key = flag.slice(2);
     if (Object.hasOwn(parsed, key)) fail(`Opção repetida: ${flag}`);
     parsed[key] = ["full", "resume-paused"].includes(key) ? true : args[++index];
@@ -51,8 +54,9 @@ function beginLocked(root, worktree, branch, relative, manifestPath, pkg) {
   if (exists(safe(root, relative))) {
     const state = readJson(root, relative);
     validateState(state, relative);
-    if (state.worktree !== worktree || JSON.stringify(state.files) !== JSON.stringify(pkg.files))
-      fail("Execução existente incompatível; reconciliar sem duplicar");
+    if (state.worktree !== worktree) fail("Execução existente incompatível; reconciliar sem duplicar");
+    if (JSON.stringify(state.files) !== JSON.stringify(pkg.files))
+      fail("Pacote mudou desde o begin; registrar refinamento com refine --reason --authorization");
     reconcile(state);
     verifyPackage(state);
     return { state, relative };
@@ -112,6 +116,13 @@ function operate(root, worktree, relative, opts) {
     fail("Identidade de repo/branch/worktree divergente");
   try {
     reconcile(state);
+    if (opts.operation === "refine") {
+      // Pacote divergente é o pré-requisito do refine; conferência volta a valer após aplicar.
+      refine(state, opts);
+      verifyPackage(state);
+      write(root, relative, state);
+      return { state, relative };
+    }
     verifyPackage(state);
     if (opts.operation === "resume") resume(state, opts);
     if (opts.operation === "record") record(state, readJson(root, relativePath(root, opts.event)));

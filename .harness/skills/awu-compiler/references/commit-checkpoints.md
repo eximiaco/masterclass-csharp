@@ -83,6 +83,13 @@ schema version 1, outside semantic memory, while execution is active. Store:
   validation references and relevant input/config hashes;
 - pending gates and concrete blocked reasons.
 
+Field shapes per checkpoint: `validation_refs` is a list of path strings that
+appear in the validating unit's `evidence`; `input_hashes` is a map
+`{ "<worktree-relative path>": "<sha256>" }`. Later units may edit a file
+already delivered by a verified checkpoint: the executor reconciles the earlier
+unit's inputs against the checkpoint commit, so declare such shared paths in
+`diagnostics.couplings` and keep the units serialized by real dependencies.
+
 Git is authority, not state JSON. On resume verify each commit still exists,
 is ancestral to the executing branch/worktree, and corresponds to the required
 result and evidence. Reuse valid commits, distinguish no-change, and reconcile

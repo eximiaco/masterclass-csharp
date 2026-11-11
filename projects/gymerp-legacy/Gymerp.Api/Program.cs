@@ -32,6 +32,10 @@ builder.Services.AddScoped<IFullEnrollmentService, FullEnrollmentService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
+// Gateway de pagamento (PagarMe); exige PagarMe:ApiKey e PagarMe:ApiUrl na configuração
+builder.Services.AddHttpClient("PagarMe");
+builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

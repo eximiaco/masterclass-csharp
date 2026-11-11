@@ -26,13 +26,12 @@ namespace Gymerp.IntegrationTests.Services
 
         public PaymentServiceTests()
         {
-            _container = new MsSqlBuilder()
-                .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
                 .WithPassword("YourStrong!Passw0rd")
                 .Build();
         }
 
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             await _container.StartAsync();
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -67,7 +66,7 @@ namespace Gymerp.IntegrationTests.Services
             await _context.Database.EnsureCreatedAsync();
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             if (_context != null)
                 await _context.DisposeAsync();
@@ -75,7 +74,7 @@ namespace Gymerp.IntegrationTests.Services
         }
 
         [Fact]
-        public async Task ProcessAsync_WithValidEnrollment_ShouldCreatePaymentAndConfirmEnrollment()
+        public async Task ProcessAsync_WithValidEnrollment_ShouldPersistPaymentConsistentWithResult()
         {
             // Arrange
             var plan = new Plan("Plano Teste", "Descrição Teste", 100m, 1);
@@ -88,9 +87,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
-            await _context.Plans.AddAsync(plan);
-            await _context.Students.AddAsync(student);
-            await _context.SaveChangesAsync();
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
@@ -104,16 +103,24 @@ namespace Gymerp.IntegrationTests.Services
             var result = await _service.ProcessAsync(enrollment);
 
             // Assert
-            Assert.True(result.Success);
-            Assert.Equal("Pagamento aprovado", result.Message);
-
-            var updatedEnrollment = await _enrollmentRepository.GetByIdAsync(enrollment.Id);
-            Assert.Equal(EnrollmentStatus.Active, updatedEnrollment.Status);
-
+            // Teste de caracterização: ProcessAsync aprova o pagamento de forma aleatória,
+            // então cada desfecho possível é validado de forma consistente com o resultado.
             var payments = await _paymentRepository.GetByEnrollmentIdAsync(enrollment.Id);
-            Assert.Single(payments);
-            var payment = payments.First();
-            Assert.Equal(PaymentStatus.Paid, payment.Status);
+            var payment = Assert.Single(payments);
+            var updatedEnrollment = await _enrollmentRepository.GetByIdAsync(enrollment.Id);
+
+            if (result.Success)
+            {
+                Assert.Equal("Pagamento aprovado", result.Message);
+                Assert.Equal(PaymentStatus.Paid, payment.Status);
+                Assert.Equal(EnrollmentStatus.Active, updatedEnrollment.Status);
+            }
+            else
+            {
+                Assert.Equal("Pagamento não aprovado", result.Message);
+                Assert.Equal(PaymentStatus.Overdue, payment.Status);
+                Assert.Equal(EnrollmentStatus.Pending, updatedEnrollment.Status);
+            }
         }
 
         [Fact]
@@ -130,9 +137,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
-            await _context.Plans.AddAsync(plan);
-            await _context.Students.AddAsync(student);
-            await _context.SaveChangesAsync();
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
@@ -179,9 +186,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
-            await _context.Plans.AddAsync(plan);
-            await _context.Students.AddAsync(student);
-            await _context.SaveChangesAsync();
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
@@ -227,6 +234,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
@@ -289,6 +299,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,

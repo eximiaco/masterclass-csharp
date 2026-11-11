@@ -57,10 +57,24 @@ relativos ao worktree; provas à raiz comum, sanitizadas e fora do workspace.
 Hashes são SHA-256. Revisão de validação deve ser HEAD observado. Inputs/provas
 alterados invalidam unidade/consumidores e suas obrigações. Corrigir causa e
 revalidar somente afetados; código não escolhe estratégia nem reduz oracle.
+Input incluído em checkpoint verificado da própria unidade (`validation_from_units`)
+é reconciliado contra o blob desse commit, não contra o worktree: unidade posterior
+pode editar o mesmo arquivo sem invalidar resultado já commitado. Input fora de
+checkpoint verificado continua conferido no worktree.
+
+`refine --state <path> --reason <texto> --authorization <arquivo> [--invalidate <ids>]`
+aceita pacote alterado após decisão autorizada: mesmas unidades e mesmos
+checkpoints/owners; recalcula `files`/`manifest`, invalida unidade com spec alterada
+e as pedidas, reabre aprendizado/entrega e acrescenta `refinements[]` ao estado
+(motivo, autorização `{path, sha256}`, mudanças de hash e unidades invalidadas).
 
 Checkpoint externo schema 1 contém package_id e checkpoints indexados por ID.
 Registro exige status committed/reused, commit_sha, parent_sha, branch, worktree,
 changed_paths exatos, validation_refs e input_hashes de fontes UTF-8 do commit.
+Formato: `validation_refs` é lista de paths (strings, relativos à raiz comum) que
+precisam constar em `evidence` do `unit-validated`; `input_hashes` é mapa
+`{ "<path relativo ao worktree>": "<sha256>" }`. `commit_sha`, `parent_sha`,
+`branch`, `worktree` e `changed_paths` vêm da saída de `workspace.mjs commit`.
 Conferir conteúdo/ancestralidade; exclusões e staging seguem
 [protocolo canônico](../../awu-compiler/references/commit-checkpoints.md).
 Hashes continuam cobrindo os bytes validados no worktree. Quando Git transforma

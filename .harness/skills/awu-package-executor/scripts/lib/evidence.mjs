@@ -50,6 +50,35 @@ function matchesCleanedInput(state, cp, relative, expected) {
   return cleaned === committed;
 }
 
+/**
+ * Inputs entregues por checkpoint verificado da própria unidade são conferidos no
+ * blob do commit, não no worktree: unidades posteriores podem editar o mesmo
+ * arquivo sem invalidar um resultado já commitado. Demais inputs seguem o worktree.
+ */
+function verifyUnitInputs(state, unitId, inputs) {
+  const committed = new Map();
+  for (const definition of state.manifest.commit_checkpoints) {
+    const observed = state.checkpoints[definition.id];
+    if (!observed?.commit_sha || !definition.validation_from_units.includes(unitId)) continue;
+    for (const relative of observed.changed_paths) committed.set(relative, observed.commit_sha);
+  }
+  const live = [];
+  for (const input of inputs) {
+    const sha = committed.get(input.path);
+    if (!sha) {
+      live.push(input);
+      continue;
+    }
+    safe(state.worktree, input.path);
+    const content = runProgram("git", ["show", `${sha}:${input.path}`], { cwd: state.worktree });
+    if (content.code !== 0) fail(`Input validado ausente do checkpoint: ${input.path}`);
+    if (hash(content.stdout) !== input.sha256 && !matchesCleanedInput(state, { commit_sha: sha }, input.path, input.sha256))
+      fail(`Input validado divergente do checkpoint: ${input.path}`);
+  }
+  if (!inputs?.length) verifyRefs(state.worktree, inputs);
+  if (live.length) verifyRefs(state.worktree, live);
+}
+
 /** Confere prova e inputs atuais; evidência durável deve sobreviver ao pacote. */
 export function validateProof(state, event) {
   verifyRefs(state.worktree, event.inputs);
@@ -72,17 +101,14 @@ export function reconcile(state) {
   for (const [id, observed] of Object.entries(state.checkpoints)) {
     if (JSON.stringify(checkpoint(state, id)) !== JSON.stringify(observed)) fail(`Checkpoint alterado: ${id}`);
   }
-  for (const unit of Object.values(state.units)) {
+  for (const [unitId, unit] of Object.entries(state.units)) {
     if (!unit.validation) continue;
     try {
-      verifyRefs(state.worktree, unit.validation.inputs);
+      verifyUnitInputs(state, unitId, unit.validation.inputs);
       verifyRefs(state.root, unit.validation.evidence);
       verifyRefs(state.root, [unit.validation.review]);
     } catch (error) {
-      invalidateAffected(
-        state,
-        Object.keys(state.units).find((id) => state.units[id] === unit)
-      );
+      invalidateAffected(state, unitId);
       throw error;
     }
     if (!gitOk(["merge-base", "--is-ancestor", unit.validation.source_revision, "HEAD"], { cwd: state.worktree }))
