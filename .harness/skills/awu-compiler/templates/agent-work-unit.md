@@ -115,6 +115,12 @@ Inclua somente quando aplicável:
 - tratamento de erros;
 - observabilidade.
 
+Quando a unidade envolver dados persistidos, inclua os fatos de schema
+(tabelas, colunas, tipos, nullability, índices), as assinaturas de functions e
+procedures envolvidas e o SQL fixado como decisão, cada um marcado como
+`verified` (via data source) ou `code-derived`. O executor não depende de
+acesso ao banco para conhecer esses fatos.
+
 Especifique **o contrato da implementação**, não uma sequência arbitrária de
 edições no código.
 
@@ -168,6 +174,22 @@ em vez de:
 
 {{validation}}
 
+Referenciar `test-strategy.yaml` aprovada (ou `not-applicable` justificado),
+transportando decisões fechadas de cobertura, nível, oracle e retenção.
+Recuperar pendências com
+`node .harness/skills/test-suite-guardian/scripts/temporary-tests.mjs status --all --summary`;
+reconciliar implementação/discovery e o registro da execução. Antes de
+entrega Git, promoção de conhecimento ou remoção do pacote, executar cleanup
+elegível, discovery permanente, conferência de referências/imports e validações
+afetadas, registrando `record-closure` com evidência durável. Não apagar falha,
+arquivo alheio ou conteúdo divergente; reconsultar guardiã para mudança material.
+
+Se expiração de uma prova depender de resultado posterior real, registrar na
+estratégia e no lifecycle o responsável posterior e gate final pendente. Isso
+permite conclusão técnica e checkpoint local desta unidade com prova ativa fora
+do staging; não antecipar entrega Git final nem exigir consumidor antes de sua
+dependência. Encerrar aqui os lifecycles cuja expiração pertence a esta unidade.
+
 Defina as evidências necessárias para demonstrar que a implementação está
 correta.
 
@@ -208,7 +230,10 @@ Exemplos:
 - procedures;
 - ids canônicos do harness normativo (`PB-0001`, `GL-0001`, `GR-0001`, …)
   obtidos via `arch.*` para esta unidade — cite id e proveniência, sem colar o
-  corpus (rastreabilidade da compilação; o executor não reabre arquitetura).
+  corpus (rastreabilidade da compilação; o executor não reabre arquitetura);
+- verificação em data source declarado em `.harness/data-sources.yaml` — cite
+  source id, database e data da verificação; nunca connection string nem
+  valores de linhas.
 
 Não use relatórios em `.harness/reports/conformity-gaps/` como evidência
 autoritativa de comportamento atual nem para baixar a norma.
@@ -221,6 +246,8 @@ Exemplo:
 - `tests/integration/payment.test.ts` — comportamento esperado da integração.
 - `ADR-014` — determina que publicação de eventos ocorre via outbox.
 - `PB-0001` / `GL-0001` — playbook e guideline aplicáveis a esta unidade.
+- `orders-db` / `ORDERS` (2026-01-15) — colunas de `Payment` e assinatura de
+  `settle_payments_bulk` verificadas via data source.
 Não utilize memória como autoridade superior ao estado atual do projeto.
 
 ## Execution instructions
@@ -228,8 +255,8 @@ Não utilize memória como autoridade superior ao estado atual do projeto.
 Este Agent Work Unit representa uma única unidade de execução classificada pelo
 `work_type` definido nos metadados.
 
-A seleção do agente, harness, modelo e demais detalhes de execução é
-responsabilidade da camada de orquestração.
+A coordenação do pacote pertence à [awu-package-executor](../../awu-package-executor/SKILL.md).
+Seleção de agente/harness/modelo pertence à camada de execução, sem identidade na AWU.
 
 Antes de modificar o projeto, o agente executor deve criar um plano de
 execução.
@@ -252,6 +279,17 @@ Se durante o planejamento ou implementação surgir uma decisão necessária que
 não possa ser determinada pelo Agent Work Unit ou por uma fonte autoritativa
 explicitamente disponível, a decisão não deve ser inventada.
 
+## Commit checkpoint
+
+{{owned_checkpoint_or_not_applicable}}
+
+Quando responsável por checkpoint do manifesto, cumprir gates técnicos e revisar
+diff/staging antes do commit local. Selecionar somente paths autorizados, sem
+workspace, temporários, raw evidence ou mudanças alheias; preservar staging alheio.
+Verificar SHA/parent/branch/worktree, paths e inputs validados, depois registrar
+estado em `.harness/workspace/commit-checkpoints/<package-id>.json` e liberar
+consumidores. Não usar preflight finish, push ou PR em marco intermediário.
+
 ## Completion
 
 Este Agent Work Unit somente pode ser considerado concluído quando:
@@ -259,8 +297,13 @@ Este Agent Work Unit somente pode ser considerado concluído quando:
 - [ ] o comportamento esperado estiver implementado;
 - [ ] todos os critérios de aceite forem atendidos;
 - [ ] todas as validações obrigatórias aplicáveis forem executadas com sucesso;
+- [ ] estratégia reconciliada e lifecycles com expiração nesta unidade fechados
+      com cleanup/verificação/evidência; provas dependentes de resultado posterior
+      têm responsável posterior explícito e gate final pendente;
 - [ ] não existirem placeholders ou implementações temporárias substituindo o comportamento requerido;
 - [ ] o agente tiver revisado suas próprias alterações;
+- [ ] checkpoint próprio, quando definido, verificado no Git e registrado com
+      SHA real e evidências antes de liberar consumidores;
 - [ ] nenhuma decisão relevante permanecer implícita ou pendente;
 - [ ] o workflow de aprendizado e memória definido em `AGENTS.md` tiver sido avaliado.
 

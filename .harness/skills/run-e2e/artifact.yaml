@@ -1,0 +1,16 @@
+apiVersion: ai-playbook/v1
+kind: Skill
+metadata:
+  name: run-e2e
+  version: 0.1.0
+  description: >-
+    Executa os testes E2E (Playwright em containers) da suíte completa, de um cenário ou de um conjunto, sobe e derruba a stack de forma determinística e emite relatório padronizado com ponteiros de falha para investigação.
+  status: experimental
+  tags:
+    - testing
+    - e2e
+    - playwright
+spec:
+  entrypoint: SKILL.md
+  dependencies:
+    - skills/awu-workspace@0.1.0

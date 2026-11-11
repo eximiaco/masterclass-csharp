@@ -50,6 +50,18 @@ do `execution-manifest.yaml`, consolidando cada dependência com o rationale
 registrado no manifesto. Não crie dependências, racionais ou estratégias
 adicionais.
 
+## Commit checkpoints
+
+| Checkpoint | Responsável | Após gates de | Antes de consumidores | Escopo | Validações/gate | Mensagem |
+| --- | --- | --- | --- | --- | --- | --- |
+| {{checkpoint_id}} | {{owner_unit}} | {{after_units}} | {{before_units}} | {{paths_from_units}} | {{validation_from_units_and_gate}} | {{commit_subject}} |
+
+Derivar exclusivamente de `commit_policy`/`commit_checkpoints` do manifesto.
+Não criar marcos ou dependências nesta visão. Após significa gates técnicos
+validados/revisados; só conclusão do responsável aguarda commit próprio.
+Consolidar exclusões de temporários/workspace, estado de retomada e gate final,
+preservando handoff da guardiã. Compilação planeja; não gera commits ou SHAs.
+
 ## Relevant contracts and decisions
 
 {{contracts_and_decisions}}

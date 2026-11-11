@@ -13,6 +13,8 @@
 #
 # `diagnostics` registra o racional da compilação (processo) e nunca substitui
 # o review-manifest.md (visão consolidada das especificações emitidas).
+# Escalares em sequências não usam ": " dentro de aspas: o parser real trata
+# esse padrão como mapeamento. Usar separador — em diagnostics.
 # Cada entrada tem no máximo 240 caracteres. Seção efêmera: é removida junto
 # com o manifesto e nunca documenta comportamento atual do sistema.
 #
@@ -27,6 +29,13 @@ source:
   type: "{{source_type}}"
   reference: "{{source_reference}}"
 
+# Inputs adicionais do pacote, conferidos por hash pelo executor. Obrigatório para
+# request.md quando a pasta do pacote foi aberta pelo awu-workspace; o hash vem de
+# `workspace.mjs status` (request_sha256).
+# package_inputs:
+#   - path: "request.md"
+#     sha256: "{{request_sha256}}"
+
 diagnostics:
 
   decomposition:
@@ -40,6 +49,10 @@ diagnostics:
 
   execution_risks:
     - "{{known_execution_or_parallelism_risks}}"
+
+  # Uma entrada por data source avaliado: verified | degraded | not_used + motivo.
+  data_sources:
+    - "{{source_id}} — {{verified_degraded_or_not_used_with_reason}}"
 
 units:
 
@@ -66,3 +79,32 @@ units:
   #   depends_on:
   #     - id: "user-auth-api"
   #       rationale: "Fluxos HTTP fim-a-fim exigem os endpoints implementados."
+
+# Metadados consumidos pelo executor, não pelo CLI awu-workspace.
+# Não executar commits durante compilação; não preencher SHAs previstos.
+commit_policy:
+  mode: local-checkpoints-during-authorized-execution
+  baseline: record-current-head-branch-worktree-before-first-edit; no-empty-baseline-commit
+  execution_state: ".harness/workspace/commit-checkpoints/{{manifest_id}}.json"
+  scope: reviewed-changes-produced-by-listed-units-only
+  ephemeral_exclusions:
+    - .harness/workspace/
+    - registered-validation-only-owned-paths
+    - credentials-and-raw-evidence
+  publication: existing-delivery-flow-only-after-package-completion; never-workspace-finish-for-intermediate-checkpoint
+  final_gate: required-technical-gates-passed; guardian-lifecycles-closed; durable-evidence-verified; package-removed-last
+  after_units_semantics: technical-implementation-validation-review-gates; only-owner-completion-waits-for-checkpoint
+  final_sha_record: after-commit-in-excluded-operational-state-and-handoff; never-self-hash-in-committed-summary
+
+# Zero ou mais checkpoints, proporcionais aos resultados; não uma quota por AWU.
+commit_checkpoints:
+  - id: "{{semantic_checkpoint_id}}"
+    owner_unit: "{{owner_awu_id}}"
+    after_units: ["{{technical_gate_provider_id}}"]
+    before_units: [] # Somente consumidores reais já dependentes no grafo.
+    paths_from_units: ["{{scope_owner_id}}"] # Resolver paths exatos pelo diff revisado.
+    validation_from_units: ["{{validation_provider_id}}"]
+    gate: "{{observable_success_and_diff_staging_review_gate}}"
+    commit_subject: "{{profile_conforming_subject}}"
+    evidence: [commit_sha, parent_sha, branch, worktree, changed_paths, validation_refs]
+    temporary_policy: validation-only-and-operational-state-excluded; permanent-skill-selftests-allowed

@@ -1,0 +1,51 @@
+# Schema 1. Template only; fill all material decisions before status ready.
+# Outputs use the consuming repository profile. Actual evidence starts pending.
+schema_version: 1
+status: needs-resolution # ready | needs-resolution | not-applicable
+reason: null # Required with evidence for not-applicable; decisions remain empty.
+feature_scope: null
+source_revision: null
+change_assessment: null # Classificar delta, contratos alterados, caminhos mantidos e cobertura operacional existente.
+sources: [] # {path, symbol, revision, sha256}
+normative_constraints: [] # Already resolved by compiler; no new normative inference.
+risks: [] # {id, contract, consequence, implementation, evidence}
+baseline:
+  cases: [] # {file, title, level, contracts, measured_cost: unknown | measurement}
+  measured_cost: unknown
+decisions: []
+# Per decision: id, risks, disposition (reuse|extend|add|consolidate|retire|omit),
+# lifetime (durable|validation-only|none), level, sources, destinations,
+# oracle, incremental_value, overlap_basis, proven_boundary, residual_risk.
+# Separar delivery_need de retention_rationale; justificar proteção existente,
+# detecção futura adicional e maintenance_cost (inicial, recorrente, medido ou unknown).
+# Aceite pede evidência, não teste durável novo por valor/operação/nível.
+# Exact expanded cases, no quotas. Sampling explicitly names lost protection.
+execution: [] # {decision_id, cwd, runner, config, selection, command, dependencies, retry_policy}
+temporary_lifecycle:
+  execution_id: null # feature + UUID; never branch name alone
+  registry: null # .harness/workspace/test-lifecycle/<execution-id>/temporary-tests.json
+  plan: null # JSON contract consumed by begin --plan; see lifecycle reference.
+  entries: []
+  # Per path: kind (test|helper|config), owner, reason, oracle, expiration,
+  # replacement OR no_future_risk, required_inputs, selection,
+  # default_exclusion, created_hash: pending, validated_hash: pending,
+  # identification (validation-only/<execution-id>/validation-only.<native-ext>),
+  # evidence and exact helper/native validation/cleanup commands.
+  # No existing files or mixed permanent/temporary files. Exclusion comes first.
+expected_inventory:
+  durable_before: {} # counts per level derived from discovery
+  durable_after: {}
+  validation_only: [] # separate from durable counts
+  measured_cost: unknown
+  delta_reason: null
+closure:
+  owners: {}
+  durable_evidence: null # .harness/audits/test-strategy/<feature>/<execution-id>/
+  post_cleanup_discovery: null
+  post_cleanup_references: null
+  affected_checks: []
+  pending: []
+
+# Planning classification: references/classification.md.
+# Runtime entry/operations: --summary; omit flag only for relevant full detail.
+# Integral durable proof may remain local; shared summary does not replace it.

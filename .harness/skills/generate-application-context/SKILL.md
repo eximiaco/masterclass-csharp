@@ -126,20 +126,29 @@ A mesma seção `version_control` declara a estratégia de branching em
 - `strategy`: `trunk-based` (branch de desenvolvimento `main`) ou
   `git-flow` (branch de desenvolvimento `develop`);
 - `development_branch`: nome da branch de desenvolvimento;
-- `open_pr`: `true` entrega por pull request; `false` faz merge direto na
-  branch de desenvolvimento;
-- `work_branch_template`: padrão do nome da branch de trabalho, com os
-  placeholders `{type}` e `{context}`, como `{type}({context})`;
+- `open_pr`: `true` entrega por pull request; a `awu-workspace` não suporta
+  merge direto (`false`);
+- `work_branch_naming`: template da branch por tipo de work item, com `{id}`
+  (`user_story`, `bug`, `technical_debt` ou outro tipo normalizado), e
+  `descriptive` com `{slug}` para trabalho sem work item;
 - `pr_provider`: provedor que abre o pull request, `github` ou
   `azure-devops`; o valor precisa combinar com o formato do remote
   `origin`.
 
 Quando o repositório não oferecer evidência da estratégia real, declare os
 defaults (`trunk-based`, `development_branch` conforme a estratégia,
-`open_pr: true`, `work_branch_template: "{type}({context})"`,
-`pr_provider: "github"`) e confirme
-com o usuário. Skills de execução, como `awu-dev-preflight`, consomem esta
-seção e preenchem os defaults quando ela estiver incompleta.
+`open_pr: true`, `work_branch_naming` com `user_story: "feature/us-{id}"` e
+`descriptive: "feature/{slug}"`, `pr_provider: "github"`) e confirme
+com o usuário. A `awu-workspace` consome esta seção e usa os defaults em
+memória quando ela estiver incompleta, sem reescrever o profile.
+
+`version_control.worktree` declara onde ficam as frentes paralelas:
+
+- `path`: diretório base dos worktrees, relativo à raiz e fora dela, como
+  `../<repo>.wt`;
+- `bootstrap.copy` e `bootstrap.ignore`: arquivos locais não versionados que
+  toda frente nova deve receber ou ignorar. Declare só caminhos; nunca leia nem
+  registre o conteúdo deles.
 
 Emita cada campo somente quando houver evidência suficiente; omita
 individualmente os campos que não puderem ser declarados com confiança.

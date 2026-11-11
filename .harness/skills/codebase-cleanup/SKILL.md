@@ -17,7 +17,7 @@ description: >
 
 ## Purpose
 
-Analyze the whole codebase and the AI-harness artifacts after one or more
+Analyze the requested codebase scope and relevant AI-harness artifacts after one or more
 implementation rounds (spec commits) and produce a **consolidated, prioritized
 cleanup report** with two product classes:
 
@@ -71,9 +71,11 @@ The hygiene checks enforce invariants declared elsewhere in the toolkit:
 3. Memory must stay curated and process-aligned: no obsolete, redundant, incorporated entries, or behavioral/procedural overrides that distort standard agent workflows or alter development/validation flows (e.g., instructions to execute test suites twice, add sleep delays, or bypass gates) (`AGENTS.md` → Manutenção da memória).
 4. The tree must be green: build, fast hermetic tests, formatter, linter
    (`development-guideline` → Before you call it done).
-5. `.harness` must be tracked by git and searchable by grep tools
-   (playbook → gitignore/rgignore rules). A `.harness` entry in `.gitignore`
-   or `.rgignore` is itself a hygiene finding.
+5. Harness sources must remain tracked and searchable. Global exclusion of
+   `.harness` sources is a finding; deliberate runtime/evidence exclusions are
+   valid under [artifact retention](references/artifact-retention.md). Read
+   ignored operational paths only with explicit scope. Active packages are
+   never garbage by age.
 
 ## Finding taxonomy and dispatch classification
 
@@ -125,6 +127,10 @@ classification is the prioritization axis inside each type: `mecanico`
 items are the low-complexity, low-risk work that batches into a single
 package, while `precisa-decisao` items wait for a decision.
 
+Operational completion belongs to executor/guardian: exact owned cleanup,
+evidence, learning and final gates. This audit neither performs those removals
+nor runs automatically at the end of every package. No retention TTL or daemon.
+
 ## When to use
 
 Use when the user asks to clean up, sanitize, or simplify the codebase, find
@@ -147,8 +153,8 @@ Before orchestrating, load and follow:
 - `.harness/skills/awu-compiler/SKILL.md` — it declares the Agent Work Unit
   lifecycle and traceability rules whose violations the hygiene checks
   audit;
-- `.harness/memory/MEMORY.md`, when present — it is the authoritative list of
-  **fixed decisions** that reviewers must not flag;
+- `.harness/memory/MEMORY.md`, when present — supporting context, verified against current code/tests/config/docs;
+  read procedures/episodes only when related to the requested scope;
 - open defect reports under `docs/` (e.g., `docs/defect-report-*.md`) —
   already-documented defects are out of scope for findings.
 
@@ -183,9 +189,10 @@ during the audit.
 - **Code scopes** (simplification backlog): split by buildable project or
   cohesive area (for this repo the proven split is: protocol / host / test
   suites). Test suites may be a scope of their own — they accumulate
-  duplication differently. 2-5 workers; one per ~3-6k lines or per project,
-  whichever fits better.
-- **Harness scope** (hygiene findings): exactly one worker covering
+  duplication differently. Proportional fan-out; one per cohesive area,
+  whichever fits better when parallel capacity is available. Serial review is
+  valid for small scopes or unavailable delegation.
+- **Harness scope** (hygiene findings): one cohesive review covering
   `.harness/memory/`, `.harness/workspace/awu-packages/`, `.harness/plans/`, the
   `.gitignore`/`.rgignore` configuration, and the spec-reference sweep
   across `src/` and `tests/`.
@@ -200,8 +207,9 @@ scope.
 
 ### 4. Spawn workers in parallel
 
-Spawn one `rlm` sub-agent per scope in **separate calls** (they run in
-parallel), with stable names. Code workers use `templates/review-worker.md`;
+Use available delegation only when scope/capacity justify it, otherwise review
+serially. No specific agent runtime or model is required. With delegation, use
+one worker per scope and stable names. Code workers use `templates/review-worker.md`;
 the harness worker uses `templates/harness-worker.md`. Fill `{output}` and
 append the scope section. Key contract points that must not be dropped:
 
@@ -222,7 +230,7 @@ append the scope section. Key contract points that must not be dropped:
   - *needs owner decision* — judgment call (abandoned/superseded specs,
     ambiguous memory entries, constraint carriers that need
     promote-then-delete);
-- exclusion rules: never flag decisions fixed in MEMORY.md/specs, never flag
+- exclusion rules: verify memory against higher authority; never flag
   already-documented defects, never propose touching active Agent Work Units;
 - evidence rules: every finding cites file:line for **all** occurrences
   (verify duplication by grep before reporting) and shows the concrete
@@ -235,10 +243,9 @@ append the scope section. Key contract points that must not be dropped:
   one-line entries with the main file:line) so the orchestrator merges type
   groups across reports without re-reading full findings;
 - delivery: write the full report to `{output}` **and** reply to the parent
-  with `agent_message` containing an executive summary and the per-type
-  counts.
+  with the runtime available, containing summary, per-type counts and report path.
 
-End the turn after spawning; let replies arrive asynchronously.
+Keep execution resumable and collect all scoped reports before synthesis.
 
 ### 5. Track progress
 
@@ -295,7 +302,7 @@ maintainer reads, judges, and dispatches from. It contains:
   decisions, suggested first dispatch. Link the report files.
 - State explicitly that the skill changed nothing: every item awaits human
   judgment and dispatch.
-- Delete the worker sub-agents (`rlm.delete_subagent`).
+- Close any delegated worker lifecycle using the available runtime.
 - Learning extraction: per `AGENTS.md`, evaluate whether anything learned is
   worth persisting. When a hygiene finding reveals **why** an invariant
   leaked (e.g., executors skipping the Agent Work Unit removal step), promote
@@ -314,8 +321,8 @@ maintainer reads, judges, and dispatches from. It contains:
   group to `pacote parcial` with the pending items named.
 - A duplication finding without the full occurrence list is not a finding —
   send it back.
-- A finding that contradicts MEMORY.md is a bug in the review — the worker
-  must re-check against specs/memory before reporting.
+- A finding that contradicts memory must cite current higher-authority evidence;
+  memory never suppresses a valid code/test/config/documentation finding.
 - Never propose touching an active Agent Work Unit; executing Agent Work Units are
   out of scope.
 - Prefer one verified high-impact theme over ten stylistic nits.
