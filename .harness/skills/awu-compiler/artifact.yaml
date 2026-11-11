@@ -1,0 +1,15 @@
+apiVersion: ai-playbook/v1
+kind: Skill
+metadata:
+  name: awu-compiler
+  version: 3.2.0
+  description: Compila requisitos e contexto do repositório em Agent Work Units executáveis por agentes autônomos.
+  status: experimental
+  tags:
+    - specification
+    - orchestration
+spec:
+  entrypoint: SKILL.md
+  dependencies:
+    - guidelines/development-guideline@latest
+    - tools/mcp-runtime@^0.5.0

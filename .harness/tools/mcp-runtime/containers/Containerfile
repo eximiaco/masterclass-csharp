@@ -1,0 +1,45 @@
+# Imagem do runtime MCP (SPEC §2): os servers oficiais executam a partir de suas
+# fontes oficiais, sem rebuild de código-fonte alheio.
+# A imagem NÃO define entrypoint de protocolo: expõe os comandos dos servers;
+# quem invoca (compose ou run documentado) compõe a linha de comando diretamente.
+# Pins vindos de containers/pins.env via build.args (compose.yaml).
+# BuildKit não expande variáveis em `COPY --from` — a origem oficial pinada é
+# usada como stage (a expansão é válida em FROM; workaround indicado pelo builder).
+ARG GITHUB_MCP_IMAGE
+FROM ${GITHUB_MCP_IMAGE} AS github-dist
+
+FROM node:22-bookworm-slim
+
+ARG ADO_MCP_NPM_VERSION
+ARG ADO_HTTP_ADAPTER
+ARG AZURE_CLI_VERSION
+
+# GitHub MCP Server: binário copiado da imagem oficial pinada por digest.
+# Na imagem oficial (distroless) o binário fica em /server/github-mcp-server.
+COPY --from=github-dist /server/github-mcp-server /usr/local/bin/github-mcp-server
+
+# Azure CLI pelo repositório apt oficial da Microsoft (modo azcli do ADO MCP)
+# e libsecret-1-0, dependência nativa (keytar) de @azure/msal-node-extensions.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates gnupg curl libsecret-1-0 \
+ && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+      | gpg --dearmor -o /usr/share/keyrings/microsoft.gpg \
+ && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/azure-cli/ bookworm main" \
+      > /etc/apt/sources.list.d/azure-cli.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends "azure-cli=${AZURE_CLI_VERSION}" \
+ && apt-get purge -y --auto-remove gnupg \
+ && rm -rf /var/lib/apt/lists/*
+
+# Azure DevOps MCP (npm, versão exata) + adaptador stdio→HTTP (supergateway, versão exata).
+RUN npm install --omit=dev --no-audit --no-fund --prefix /opt/mcp-runtime \
+      "@azure-devops/mcp@${ADO_MCP_NPM_VERSION}" "${ADO_HTTP_ADAPTER}"
+
+# Usuário não-root; /home/mcp/.azure é alvo do volume nomeado da sessão az.
+RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin mcp \
+ && mkdir -p /home/mcp/.azure \
+ && chown -R mcp:mcp /home/mcp
+
+USER 10001:10001
+ENV HOME=/home/mcp

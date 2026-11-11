@@ -1,0 +1,56 @@
+# Remova todos os comentários, placeholders, seções vazias e campos sem
+# evidência suficiente antes de gerar .harness/project-profile.yaml.
+
+schema_version: 1
+
+application:
+  applies_to:
+    - new
+    - modified
+
+languages:
+  identifiers:
+    files: "{{language_tag}}"
+    types: "{{language_tag}}"
+    functions: "{{language_tag}}"
+    variables: "{{language_tag}}"
+    constants: "{{language_tag}}"
+
+  documentation:
+    repository: "{{language_tag}}"
+    code: "{{language_tag}}"
+    public_api: "{{language_tag}}"
+    test_descriptions: "{{language_tag}}"
+
+naming:
+  directories: "{{naming_style}}"
+  files: "{{naming_style}}"
+  types: "{{naming_style}}"
+  functions: "{{naming_style}}"
+  variables: "{{naming_style}}"
+  constants: "{{naming_style}}"
+
+# Inclua somente quando houver evidência suficiente das regras de commit do
+# projeto; remova a seção inteira quando não houver.
+version_control:
+  commits:
+    style: "{{conventional|custom}}"
+    language: "{{language_tag}}"
+    header_max_length: "{{positive_integer}}"
+    body_separator: "{{blank-line|none}}"
+
+  # Estratégia de branching consumida por skills como awu-dev-preflight.
+  # Em caso de dúvida, emita os defaults e ajuste com o usuário:
+  # trunk-based usa main; git-flow usa develop.
+  branching:
+    strategy: "{{trunk-based|git-flow}}"
+    development_branch: "{{main|develop}}"
+    open_pr: "{{true|false}}"
+    work_branch_template: "{{{type}({context})}}"
+    pr_provider: "{{github|azure-devops}}"
+
+# Inclua somente quando houver outros padrões estáveis e relevantes que não
+# pertençam a configurações nativas, guidelines ou documentação autoritativa.
+conventions:
+  "{{concern}}":
+    "{{property}}": "{{value}}"

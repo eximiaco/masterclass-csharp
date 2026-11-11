@@ -1,0 +1,7 @@
+{
+  "schema_version": "1.0",
+  "name": "mcp-runtime arch-corpus fixture",
+  "slug": "mcp-runtime-fixture",
+  "qmd_collection": "mcp-runtime-fixture",
+  "docs_root": "arch-graph/graph-doc"
+}

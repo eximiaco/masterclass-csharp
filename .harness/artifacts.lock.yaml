@@ -1,0 +1,42 @@
+artifacts:
+  guidelines/development-guideline:
+    package: '@eximiaco/ai-playbook-guidelines-development-guideline'
+    version: 0.1.0
+    registry: https://npm.pkg.github.com
+    integrity: sha512-ByohxjD5TVB2ssOQ1f4s4dFHXNS8cs+w/YHSSIy3R8DgcZKuRDnYmKOkxuTvLNMeFiiBNAC7PvDzQefDRSNKTA==
+  skills/awu-compiler:
+    package: '@eximiaco/ai-playbook-skills-awu-compiler'
+    version: 3.2.0
+    registry: https://npm.pkg.github.com
+    integrity: sha512-ZN45e3x8SuqZsW7RlGPuLWRCSO6C7mH8z8e8+uJt1OqdswV1lEgGQhTO23Jhxe+B3/8Ka39CIs5bmgTTszcxoQ==
+  skills/awu-dev-preflight:
+    package: '@eximiaco/ai-playbook-skills-awu-dev-preflight'
+    version: 0.3.0
+    registry: https://npm.pkg.github.com
+    integrity: sha512-GRSy7vixc60QXuWqEsBsV1m32ToyUQsJeW5JG/H8ap05aGB2BRP5rjDh+FD8UyEwRevrq7RjFzQ8TVbKg3ASSQ==
+  skills/codebase-cleanup:
+    package: '@eximiaco/ai-playbook-skills-codebase-cleanup'
+    version: 0.4.0
+    registry: https://npm.pkg.github.com
+    integrity: sha512-S+dExKz9KX7zdQ5nytgQU9q1eolG4xL4r02wooHfCNDAvJuGtraGbUrfQ91eoNF7l8rv3pcNdU80N0sX6oUQ/Q==
+  skills/generate-application-context:
+    package: '@eximiaco/ai-playbook-skills-generate-application-context'
+    version: 0.4.0
+    registry: https://npm.pkg.github.com
+    integrity: sha512-QBJYllC0d+8gL7cY34jdH67YIpwzPKzg+equDLffsqVB2+/KrR+vyxOB0qxlJ0U+85qAf+w0URFO3P0gZ0Nxzw==
+  specs/mcp-runtime:
+    package: '@eximiaco/ai-playbook-specs-mcp-runtime'
+    version: 0.4.1
+    registry: https://npm.pkg.github.com
+    integrity: sha512-iLXMp2y/EOm0+lQYaEwtzBHQogBZyLseW5+/RhMr3YEqBXKttGm2ppsILJl7e6T2AEXW0hGlQaLMiGf0juZa4Q==
+  tools/harness-repo-bootstrap:
+    package: '@eximiaco/ai-playbook-tools-harness-repo-bootstrap'
+    version: 0.10.2
+    registry: https://npm.pkg.github.com
+    integrity: sha512-C+nQiQnIpECfNBMZRM34JHh8v12LBZ8PCtm1KcLkgqLp+VpVolLnQACN8Wr8OGiH0+mBgpXvXZWWO4I51h3iWw==
+  tools/mcp-runtime:
+    distribution: github-release
+    version: 0.5.2
+    release: artifact/tools/mcp-runtime/v0.5.2+63bfd51
+    asset: mcp-runtime-darwin-arm64
+    integrity: sha256-058ed6a50439f010b0b70ecdc6c561465540396544730da492a765a169918620

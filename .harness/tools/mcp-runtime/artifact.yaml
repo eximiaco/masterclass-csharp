@@ -1,0 +1,28 @@
+apiVersion: ai-playbook/v1
+kind: Tool
+metadata:
+  name: mcp-runtime
+  version: 0.5.2
+  description: Runtime MCP local em containers — sobe, expõe e derruba GitHub, Azure DevOps e x-harness (SOPS+age); sincroniza o Cursor com os endpoints canônicos após o up.
+  status: experimental
+  tags:
+    - mcp
+    - containers
+    - github
+    - azure-devops
+    - x-harness
+    - architecture
+    - secrets
+spec:
+  entrypoint: TOOL.md
+  dependencies:
+    - specs/mcp-runtime@^0.4.0
+  install:
+    assisted:
+      - Rode `ai-installer self-update` antes de instalar, porque a versão antiga do ai-installer recusa artefato distribuído por release.
+      - Instale o artefato com `ai-installer install tools/mcp-runtime`; o bundle da release materializa o diretório completo do artefato em `.harness/tools/mcp-runtime/` — binário `mcp-runtime` e `containers/` juntos no mesmo diretório.
+      - Opcionalmente defina `MCP_RUNTIME_ARCH_CORPUS` com o caminho absoluto do clone do corpus normativo (repositório com `arch-graph/graph-doc`) para habilitar o serviço `xharness`. O primeiro `up` com corpus válido persiste o path no contexto.
+      - "Opcionalmente defina MCP_RUNTIME_CLIENT_ROOT com a raiz do repositório consumidor para o up também gravar .cursor/mcp.json nesse repositório. Opt-out: MCP_RUNTIME_SKIP_CLIENT_CONFIG=1."
+      - Rode `.harness/tools/mcp-runtime/mcp-runtime doctor` para conferir pré-requisitos e `.harness/tools/mcp-runtime/mcp-runtime tools install` para instalar `sops` e `age` nas versões pinadas em `~/.config/ai-playbook/bin/`.
+      - Crie o contexto do cliente com `.harness/tools/mcp-runtime/mcp-runtime secrets init --context <contexto>` e preencha os segredos com `secrets edit --context <contexto>`.
+      - "Suba a stack com mcp-runtime up --context <contexto>: valida github/ado; sobe xharness se o corpus estiver ok; aguarda handshake MCP; sincroniza a entrada awu em ~/.cursor/mcp.json (e MCP_RUNTIME_CLIENT_ROOT) apontando para 8379, sem gravar PAT; derrube com down --context <contexto>."

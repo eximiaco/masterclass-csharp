@@ -1,0 +1,9 @@
+apiVersion: ai-playbook/v1
+kind: Spec
+metadata:
+  name: mcp-runtime
+  version: 0.4.1
+  description: Contrato do runtime MCP local em containers para consumo pelos artefatos
+  status: experimental
+spec:
+  entrypoint: SPEC.md
