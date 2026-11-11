@@ -47,6 +47,19 @@ Registro feito a pedido do usuário para refinar as skills depois.
    por falha minha de word-splitting no zsh (`$PATHS` sem `${=PATHS}`), virou bloqueio em
    vez de ser recusado antes de alterar o estado.
 
+8a. **`workspace.mjs commit` só aceita `--message` de uma linha.** Não há como incluir
+    corpo nem trailers (ex.: `Co-Authored-By` exigido pelo harness). Os 4 commits da frente
+    saíram sem trailer de atribuição, e não reescrevi histórico para corrigir.
+8b. **Diretório da execução cheio de auxiliares fora do inventário.** Ficaram em
+    `.harness/workspace/package-executions/.../0cd342258369abfb21d9/` scripts ad hoc
+    (`swagger-smoke.sh`, `hash-refs.mjs`, `record-checkpoint.mjs`,
+    `reconcile-package-refinement.mjs`), logs e JSON de Swagger em `runtime/`, arquivos de
+    evento e backups de `state.json`. O `close`/`retire` trata esses arquivos como
+    inventário desconhecido. Falta na skill um lugar/protocolo para auxiliares do executor.
+8c. **Obrigações não registradas.** `learning-evaluated` e `delivery-recorded` nunca foram
+    registrados, porque o estado ficou `blocked`. O pacote segue em
+    `.harness/workspace/awu-packages/`, sem `close`.
+
 ## Problemas na compilação do pacote (spec)
 
 9. **Pré-requisito de SDK checado no PATH errado.** `dotnet --list-sdks` usava `~/.dotnet`
