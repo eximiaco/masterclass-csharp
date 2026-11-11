@@ -12,7 +12,7 @@ export function verifyPackage(state) {
     for (const item of current) {
       const original = state.files.find((entry) => entry.path === item.path);
       if (!original || original.sha256 !== item.sha256 || removed[item.path]?.status === "removed")
-        fail(`Pacote alterado/recriado: ${item.path}`);
+        fail(`Pacote alterado/recriado: ${item.path}; refinamento autorizado usa refine --reason --authorization`);
     }
   }
   for (const item of state.files) {

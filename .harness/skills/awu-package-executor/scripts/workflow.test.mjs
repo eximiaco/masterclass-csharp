@@ -250,6 +250,80 @@ test("WV7: linked worktree fecha lifecycle com registro e arquivo duráveis na r
   assert.equal(fs.existsSync(path.join(fixture.root, ".harness/audits/test-strategy/sample/sample-proof/registry.json")), true);
 });
 
+test("WV8: consumidor que edita arquivo do checkpoint anterior não invalida o provedor e o pacote fecha", (context) => {
+  const fixture = sandbox(context, true);
+  ok(fixture.start("a"));
+  commitCheckpoint(fixture);
+  ok(fixture.validate("a"));
+  ok(fixture.event({ type: "checkpoint-verified", checkpoint_id: "a-ready", checkpoint_state: CheckpointState }));
+  ok(fixture.complete("a"));
+  ok(fixture.start("i"));
+  // I altera o mesmo arquivo commitado por A (ex.: testes migrados depois de corrigidos).
+  fixture.writeWork("source.mjs", "export const result = 3;\n");
+  ok(fixture.validate("i"));
+  ok(fixture.complete("i"));
+  ok(fixture.operation("status"));
+  assert.equal(fixture.state().units.a.status, "completed");
+  assert.notEqual(fixture.state().units.a.validation.inputs[0].sha256, fixture.ref("source.mjs", fixture.work).sha256);
+  obligations(fixture);
+  ok(fixture.close());
+  assert.equal(fixture.state().status, "completed");
+});
+
+test("WV8: input commitado adulterado no histórico ainda invalida o provedor", (context) => {
+  const fixture = sandbox(context, true);
+  ok(fixture.start("a"));
+  commitCheckpoint(fixture);
+  ok(fixture.validate("a"));
+  ok(fixture.event({ type: "checkpoint-verified", checkpoint_id: "a-ready", checkpoint_state: CheckpointState }));
+  ok(fixture.complete("a"));
+  const state = fixture.state();
+  state.units.a.validation.inputs[0].sha256 = "0".repeat(64);
+  fixture.json(fixture.statePath, state);
+  const resumed = fixture.operation("resume", "--reason", "teste");
+  assert.equal(resumed.code, 1);
+  assert.match(resumed.message, /input validado/i);
+  assert.equal(fixture.state().status, "blocked");
+});
+
+test("WV9: refine aceita mudança autorizada do pacote e invalida só a unidade cuja spec mudou", (context) => {
+  const fixture = sandbox(context);
+  finishUnits(fixture);
+  fixture.writeWork(`${PackageDir}/i.md`, "# I\nValidar integração A; decisão nova do usuário.");
+  assert.equal(fixture.operation("status").code, 1);
+  assert.equal(fixture.operation("refine", "--reason", "sem autorização").code, 1);
+  fixture.write(".harness/audits/decision.md", "Usuário autorizou refinar a spec de I.");
+  const refined = ok(fixture.operation("refine", "--reason", "Decisão do usuário", "--authorization", ".harness/audits/decision.md"));
+  assert.equal(refined.result.units.a, "completed");
+  assert.equal(refined.result.units.i, "blocked");
+  const state = fixture.state();
+  assert.equal(state.refinements.length, 1);
+  assert.deepEqual(state.refinements[0].invalidated, ["i"]);
+  assert.equal(state.refinements[0].changes[0].path, `${PackageDir}/i.md`);
+  assert.equal(fixture.operation("refine", "--reason", "nada mudou", "--authorization", ".harness/audits/decision.md").code, 1);
+  ok(fixture.operation("resume", "--reason", "Refinamento aplicado"));
+  ok(fixture.start("i"));
+  ok(fixture.validate("i"));
+  ok(fixture.complete("i"));
+  obligations(fixture);
+  ok(fixture.close());
+});
+
+test("WV9: refine recusa mudança de topologia e aceita --invalidate explícito", (context) => {
+  const fixture = sandbox(context);
+  finishUnits(fixture);
+  fixture.write(".harness/audits/decision.md", "Usuário autorizou.");
+  fixture.writeWork(`${PackageDir}/review-manifest.md`, "# Review\nAtualizado.");
+  const refined = ok(
+    fixture.operation("refine", "--reason", "Review regerado", "--authorization", ".harness/audits/decision.md", "--invalidate", "a"),
+  );
+  assert.equal(refined.result.units.a, "blocked");
+  assert.equal(refined.result.units.i, "blocked");
+  const manifest = fs.readFileSync(path.join(fixture.work, Manifest), "utf8").replace("id: i\n", "id: j\n").replace("[a]", "[a]");
+  fixture.writeWork(Manifest, manifest);
+  assert.equal(fixture.operation("refine", "--reason", "topologia", "--authorization", ".harness/audits/decision.md").code, 1);
+});
+
 test("WV6: resumo cresce com bloqueios e não com evidência aninhada", () => {
   const registry = {
     execution_id: "one",

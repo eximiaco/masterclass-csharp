@@ -84,6 +84,18 @@ pacote alterado, prova inválida, falha sem causa compreendida, divergência de
 checkpoint, lock/ownership ambíguos ou pedido do usuário. Não apagar por aproximação.
 Estado corrompido/lock ilegível exige reconciliação; nunca sobrescrever para seguir.
 
+Decisão nova durante a execução refina o pacote (via compiler) e depois é
+registrada sem editar estado à mão:
+
+```bash
+node .harness/skills/awu-package-executor/scripts/package-state.mjs refine --state <state> --reason '<decisão>' --authorization <prova-durável> [--invalidate <id,id>]
+```
+
+Authorization é arquivo fora de `.harness/workspace/` que registra a decisão do
+usuário. Refine recalcula hashes do pacote, invalida a unidade cuja spec mudou
+(mais consumidores) e as listadas em `--invalidate`, e reabre aprendizado/entrega.
+Mudança de unidades ou de checkpoints/owners exige nova compilação e execução.
+
 ## Finalização
 
 Todos os gates, revisão, aprendizado, checkpoints e entrega requerida precisam
