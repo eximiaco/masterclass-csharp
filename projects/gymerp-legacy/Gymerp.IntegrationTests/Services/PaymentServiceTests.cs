@@ -26,13 +26,12 @@ namespace Gymerp.IntegrationTests.Services
 
         public PaymentServiceTests()
         {
-            _container = new MsSqlBuilder()
-                .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
+            _container = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
                 .WithPassword("YourStrong!Passw0rd")
                 .Build();
         }
 
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             await _container.StartAsync();
             var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -67,7 +66,7 @@ namespace Gymerp.IntegrationTests.Services
             await _context.Database.EnsureCreatedAsync();
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             if (_context != null)
                 await _context.DisposeAsync();
@@ -88,9 +87,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
-            await _context.Plans.AddAsync(plan);
-            await _context.Students.AddAsync(student);
-            await _context.SaveChangesAsync();
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
@@ -138,9 +137,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
-            await _context.Plans.AddAsync(plan);
-            await _context.Students.AddAsync(student);
-            await _context.SaveChangesAsync();
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
@@ -187,9 +186,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
-            await _context.Plans.AddAsync(plan);
-            await _context.Students.AddAsync(student);
-            await _context.SaveChangesAsync();
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
@@ -235,9 +234,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
-            await _context.Plans.AddAsync(plan);
-            await _context.Students.AddAsync(student);
-            await _context.SaveChangesAsync();
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
@@ -300,9 +299,9 @@ namespace Gymerp.IntegrationTests.Services
                 Gender.Male,
                 "Endereço Teste"
             );
-            await _context.Plans.AddAsync(plan);
-            await _context.Students.AddAsync(student);
-            await _context.SaveChangesAsync();
+            await _context.Plans.AddAsync(plan, TestContext.Current.CancellationToken);
+            await _context.Students.AddAsync(student, TestContext.Current.CancellationToken);
+            await _context.SaveChangesAsync(TestContext.Current.CancellationToken);
             var enrollment = new Enrollment(
                 student.Id,
                 plan.Id,
