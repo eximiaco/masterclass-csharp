@@ -117,3 +117,29 @@ Registro feito a pedido do usuário para refinar as skills depois.
 - Remover Verify, `FullEnrollmentServiceVerifyTests.cs` e `Services/Snapshots/`.
 - Ajustar `~/.zshrc` para `DOTNET_ROOT`/PATH em `/usr/local/share/dotnet` (backup
   `~/.zshrc.bak-dotnet-20261111`).
+
+## Encerramento da frente
+
+- O PR foi aprovado e mergeado na `main` (`ef5d0e8`). O `workspace.mjs cleanup` (prova
+  `content`, sem bloqueios) removeu o worktree e a branch local e levou a pasta principal
+  para a `main` por fast-forward.
+- O push foi feito com `git push -u` e não pelo `workspace.mjs finish`, porque o usuário pediu
+  só o push. Por isso o `status` da frente continuou `pushed_sha: null` / `pull_request: null`
+  até o cleanup.
+
+## Questão em aberto para o refino das skills (levantada pelo usuário)
+
+- **A limpeza do ambiente deveria acontecer logo após o push?** As alterações já estão na
+  `origin` nesse momento, e hoje o `cleanup` só roda depois do merge (`not-merged` bloqueia)
+  e com pedido explícito. Pontos a avaliar, sem decisão tomada:
+  - **A favor:** libera disco e worktree cedo, e a branch remota guarda todo o conteúdo
+    commitado.
+  - **Contra:**
+    - ajustes de review hoje são commitados na mesma frente com novo `finish`
+      (`references/delivery.md`), e seria preciso recriar o worktree a partir da branch remota;
+    - provas locais não rastreadas (`.harness/audits/**`) já ficam na raiz comum, mas outros
+      ignorados do worktree (builds, `.harness/workspace/`) seriam perdidos;
+    - o PR pode ser rejeitado ou exigir rebase.
+  - **Possível desenho:** uma limpeza "leve" após `finish` (remover builds e outputs) e a
+    remoção do worktree e da branch só após o merge; ou um `cleanup --after-push` que exija
+    a branch remota igual ao tip local e permita recriar o worktree por `start` na mesma branch.
